@@ -1,3 +1,4 @@
+import 'package:clone_instagram_local/widgets/post.widget.dart';
 import 'package:clone_instagram_local/widgets/story.widget.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,20 @@ class _FeedPageState extends State<FeedPage> {
   double scale = 1;
   int? indexTaped;
 
+  void scaleUp(int index) {
+    setState(() {
+      scale = 1;
+      indexTaped = index;
+    });
+  }
+
+  void scaleDown(int index) {
+    setState(() {
+      scale = 0.9;
+      indexTaped = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,13 +40,18 @@ class _FeedPageState extends State<FeedPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              storiesBuild(),
-              ListView.builder(
+              buildStories(),
+              ListView.separated(
                 physics: const NeverScrollableScrollPhysics(),
+                separatorBuilder: (_, __) {
+                  return const SizedBox(
+                    height: 25,
+                  );
+                },
                 shrinkWrap: true,
                 itemCount: 100,
                 itemBuilder: (_, index) {
-                  return Text(index.toString());
+                  return const Post();
                 },
               )
             ],
@@ -83,6 +103,49 @@ class _FeedPageState extends State<FeedPage> {
     );
   }
 
+  Widget buildStories() {
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            width: .3,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      child: NotificationListener<OverscrollIndicatorNotification>(
+        onNotification: (notification) {
+          notification.disallowGlow();
+          return true;
+        },
+        child: ListView.separated(
+          separatorBuilder: (_, __) => const SizedBox(
+            width: 10,
+          ),
+          itemCount: 12,
+          scrollDirection: Axis.horizontal,
+          itemBuilder: (_, index) {
+            return GestureDetector(
+              onTap: () async {
+                scaleDown(index);
+                await Future.delayed(const Duration(milliseconds: 100));
+                scaleUp(index);
+              },
+              onLongPress: () => scaleDown(index),
+              onLongPressEnd: (_) => scaleUp(index),
+              child: Transform.scale(
+                child: Story(index: index),
+                scale: indexTaped == index ? scale : 1,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget buildBottomNavigation() {
     return Container(
       decoration: const BoxDecoration(
@@ -124,54 +187,6 @@ class _FeedPageState extends State<FeedPage> {
             label: '',
           ),
         ],
-      ),
-    );
-  }
-
-  Widget storiesBuild() {
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            width: .3,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      child: NotificationListener<OverscrollIndicatorNotification>(
-        onNotification: (notification) {
-          notification.disallowGlow();
-          return true;
-        },
-        child: ListView.separated(
-          separatorBuilder: (_, __) => const SizedBox(
-            width: 10,
-          ),
-          itemCount: 12,
-          scrollDirection: Axis.horizontal,
-          itemBuilder: (_, index) {
-            return GestureDetector(
-              onLongPress: () {
-                setState(() {
-                  scale = 0.9;
-                  indexTaped = index;
-                });
-              },
-              onLongPressEnd: (_) {
-                setState(() {
-                  scale = 1;
-                  indexTaped = null;
-                });
-              },
-              child: Transform.scale(
-                child: Story(index: index),
-                scale: indexTaped == index ? scale : 1,
-              ),
-            );
-          },
-        ),
       ),
     );
   }
